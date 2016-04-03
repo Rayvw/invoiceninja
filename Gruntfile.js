@@ -112,6 +112,7 @@ module.exports = function(grunt) {
           'public/js/bootstrap-combobox.js',
           'public/js/script.js',
           'public/js/pdf.pdfmake.js',
+          'public/js/custom.pdfmake.js',
         ],
         dest: 'public/built.js',
         nonull: true
