@@ -23,7 +23,7 @@ NINJA.invoiceLines = function(invoice) {
     var grid = [[]];
 
     if (invoice.has_product_key) {
-        grid[0].push({text: invoiceLabels.item, style: ['tableHeader', 'itemTableHeader']});
+        grid[0].push({text: invoiceLabels.description, style: ['tableHeader', 'itemTableHeader']});
     }
 
     //grid[0].push({text: invoiceLabels.description, style: ['tableHeader', 'descriptionTableHeader']});
