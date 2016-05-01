@@ -89,7 +89,7 @@ NINJA.invoiceLines = function(invoice) {
             row.push({style:["productKey", rowStyle], text:productKey || ' '}); // product key can be blank when selecting from a datalist
         }
         row.push({style:["notes", rowStyle], stack:[{text:productKey, text:notes || ' '}]});*/
-        row.push({style:[rowStyle], stack:[{style:["productKey"], text:productKey || ' '}, {style:["notes"], text:notes || ' '}] });
+        row.push({style:[rowStyle], stack:[{style:["productKey"], text:productKey || ' '}, {style:["linenotes"], text:notes || ' '}] });
         if (invoice.is_pro && account.custom_invoice_item_label1) {
             row.push({style:["customValue1", rowStyle], text:item.custom_value1 || ' '});
         }
@@ -193,4 +193,135 @@ NINJA.invoiceColumns = function(invoice)
     }
 
     return columns;
+}
+
+NINJA.invoiceDetails = function(invoice) {
+
+    var data = [
+        [
+            {text: (invoice.is_quote ? invoiceLabels.quote_number : invoiceLabels.invoice_number), style: ['invoiceDetailsLabel']},
+            {text: invoice.invoice_number}
+
+        ],
+        [
+            {text:  (invoice.is_quote ? invoiceLabels.quote_date : invoiceLabels.invoice_date), style: ['invoiceDetailsLabel']},
+            {text: invoice.invoice_date}
+        ],
+        [
+            {text: 'Klantnummer', style: ['invoiceDetailsLabel']},
+            {text: invoice.client.id_number}
+        ],
+        [
+            {text:  (invoice.is_quote ? 'Vervaldatum' : 'Leverdatum'), style: ['invoiceDetailsLabel']},
+            {text: '-'}
+        ]
+    ];
+/*
+    if (invoice.custom_text_value1) {
+        data.push([
+            {text: invoice.account.custom_invoice_text_label1},
+            {text: invoice.custom_text_value1}
+        ])
+    }
+    if (invoice.custom_text_value2) {
+        data.push([
+            {text: invoice.account.custom_invoice_text_label2},
+            {text: invoice.custom_text_value2}
+        ])
+    }
+
+    var isPartial = NINJA.parseFloat(invoice.partial);
+
+    if (NINJA.parseFloat(invoice.balance) < NINJA.parseFloat(invoice.amount)) {
+        data.push([
+            {text: invoiceLabels.balance_due},
+            {text: formatMoneyInvoice(invoice.amount, invoice)}
+        ]);
+    } else if (isPartial) {
+        data.push([
+            {text: invoiceLabels.balance_due},
+            {text: formatMoneyInvoice(invoice.total_amount, invoice)}
+        ]);
+    }
+
+    data.push([
+        {text: isPartial ? invoiceLabels.partial_due : invoiceLabels.balance_due, style: ['invoiceDetailBalanceDueLabel']},
+        {text: formatMoneyInvoice(invoice.balance_amount, invoice), style: ['invoiceDetailBalanceDue']}
+    ])*/
+
+    return NINJA.prepareDataPairs(data, 'invoiceDetails');
+}
+
+
+NINJA.subtotals = function(invoice, hideBalance)
+{
+    if (!invoice) {
+        return;
+    }
+
+    var account = invoice.account;
+    var data = [];
+    data.push([{text: invoiceLabels.subtotal+' (excl. BTW):', bold: true}, {text: formatMoneyInvoice(invoice.subtotal_amount, invoice), bold: true}]);
+
+    if (invoice.discount_amount != 0) {
+        data.push([{text: invoiceLabels.discount+':'}, {text: formatMoneyInvoice(invoice.discount_amount, invoice)}]);
+    }
+
+    /*if (NINJA.parseFloat(invoice.custom_value1) && invoice.custom_taxes1 == '1') {
+        data.push([{text: account.custom_invoice_label1}, {text: formatMoneyInvoice(invoice.custom_value1, invoice)}]);
+    }
+    if (NINJA.parseFloat(invoice.custom_value2) && invoice.custom_taxes2 == '1') {
+        data.push([{text: account.custom_invoice_label2}, {text: formatMoneyInvoice(invoice.custom_value2, invoice)}]);
+    }*/
+
+    for (var key in invoice.item_taxes) {
+        if (invoice.item_taxes.hasOwnProperty(key)) {
+            var taxRate = invoice.item_taxes[key];
+            var taxStr = taxRate.name;
+            data.push([{text: taxStr+':'}, {text: formatMoneyInvoice(taxRate.amount, invoice)}]);
+        }
+    }
+
+    if (invoice.tax_amount1) {
+        var taxStr = invoice.tax_name1;
+        data.push([{text: taxStr+':'}, {text: formatMoneyInvoice(invoice.tax_amount1, invoice)}]);
+    }
+    if (invoice.tax_amount2) {
+        var taxStr = invoice.tax_name2;
+        data.push([{text: taxStr+':'}, {text: formatMoneyInvoice(invoice.tax_amount2, invoice)}]);
+    }
+
+    /*if (NINJA.parseFloat(invoice.custom_value1) && invoice.custom_taxes1 != '1') {
+        data.push([{text: account.custom_invoice_label1}, {text: formatMoneyInvoice(invoice.custom_value1, invoice)}]);
+    }
+    if (NINJA.parseFloat(invoice.custom_value2) && invoice.custom_taxes2 != '1') {
+        data.push([{text: account.custom_invoice_label2}, {text: formatMoneyInvoice(invoice.custom_value2, invoice)}]);
+    }*/
+
+    data.push([{text: invoiceLabels.total+' (incl. BTW):', bold: true}, {text: formatMoneyInvoice(invoice.total_amount, invoice), bold: true}]);
+
+    var paid = invoice.amount - invoice.balance;
+    if (invoice.account.hide_paid_to_date != '1' || paid) {
+        data.push([{text:invoiceLabels.paid_to_date+':'}, {text:formatMoneyInvoice(paid, invoice)}]);
+    }
+
+    var isPartial = NINJA.parseFloat(invoice.partial);
+
+    if (!hideBalance || isPartial) {
+        data.push([
+            { text: invoiceLabels.balance_due+':', style: [isPartial ? '' : 'balanceDueLabel'] },
+            { text: formatMoneyInvoice(invoice.total_amount, invoice), style: [isPartial ? '' : 'balanceDue'] }
+        ]);
+    }
+
+    if (!hideBalance) {
+        if (isPartial) {
+            data.push([
+                { text: invoiceLabels.partial_due+':', style: ['balanceDueLabel'] },
+                { text: formatMoneyInvoice(invoice.balance_amount, invoice), style: ['balanceDue'] }
+            ]);
+        }
+    }
+
+    return NINJA.prepareDataPairs(data, 'subtotals');
 }
