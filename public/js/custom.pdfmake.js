@@ -3,8 +3,8 @@ function formatAddress(city, state, zip, swap) {
     if (swap) {
         str += zip ? zip + '  ' : '';
         str += city ? city.toUpperCase() : '';
-        str += (city && state) ? ' ' : (city ? ' ' : '');
-        str += '('+state+')';
+        str += (city && state) ? ' ' : '';
+        str += state ? '('+state+')' : '';
     } else {
         str += city ? city : '';
         str += (city && state) ? ', ' : (state ? ' ' : '');
